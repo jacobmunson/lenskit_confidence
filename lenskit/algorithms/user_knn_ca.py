@@ -294,7 +294,7 @@ class UserUserCA(Predictor):
         #_logger.info(ri_pos)
 
         # AGGREGATION TYPE
-        _logger.info('selecting aggregation type')
+        #_logger.info('selecting aggregation type')
         if self.aggregate == self.AGG_WA:
             agg = _agg_weighted_avg
         elif self.aggregate == self.AGG_SUM:
@@ -303,7 +303,7 @@ class UserUserCA(Predictor):
             agg = _agg_avg
         else:
             raise ValueError('invalid aggregate ' + self.aggregate)
-        _logger.info('aggregation type selected')        
+        #_logger.info('aggregation type selected')        
 
         # SCORING FUNCTION
 
@@ -410,4 +410,4 @@ class UserUserCA(Predictor):
         self._mkl_m_ = mkl.SparseM.from_csr(self.rating_matrix_) if mkl else None
 
     def __str__(self):
-        return 'UserUser(nnbrs={}, min_sim={})'.format(self.nnbrs, self.min_sim)
+        return 'UserUserCA(nnbrs={}, min_sim={})'.format(self.nnbrs, self.min_sim)
