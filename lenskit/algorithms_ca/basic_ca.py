@@ -184,14 +184,14 @@ class TopN(Recommender, Predictor):
 
     def recommend(self, user, n=None, candidates=None, ratings=None):
         if candidates is None:
-            candidates = self.selector.candidates(user, ratings)
+            candidates = self.selector.candidates(user, ratings) #####
 
-        scores = self.predictor.predict_for_user(user, candidates, ratings)
+        scores = self.predictor.predict_for_user(user, candidates, ratings) ####
         _logger.info('in basic_ca, scores for user %s', user)
-        _logger.info(scores)
+        #_logger.info(scores)
         scores = scores[scores.notna()]
         _logger.info('in basic_ca, scores after notna() for user %s', user)
-        _logger.info(scores)
+        #_logger.info(scores)
         if n is not None:
             scores = scores.nlargest(n, 'prediction')
         else:
@@ -200,7 +200,7 @@ class TopN(Recommender, Predictor):
         scores.index.name = 'item'
         del scores['item'] # testing
         _logger.info('in basic_ca, scores after if and else for user %s', user)
-        _logger.info(scores)
+        #_logger.info(scores)
 
         return scores.reset_index()
 
