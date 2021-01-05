@@ -4,7 +4,7 @@ import warnings
 import pandas as pd
 import numpy as np
 
-from ..algorithms import Recommender
+from ..algorithms_ca import Recommender
 from .. import util
 from ..sharing import PersistedModel
 
@@ -13,11 +13,12 @@ _logger = logging.getLogger(__name__)
 
 def _recommend_user(algo, req):
     user, n, candidates = req
-
-    _logger.debug('generating recommendations for %s', user)
+    _logger.info(' (3) calling _recommend_user function in _recommend_ca')
+    #_logger.info(calling _recommend_user for user:)
+    _logger.info(' (4) generating recommendations for user %s', user)
     watch = util.Stopwatch()
     res = algo.recommend(user, n, candidates)
-    _logger.debug('%s recommended %d/%s items for %s in %s',
+    _logger.info('%s recommended %d/%s items for %s in %s',
                   str(algo), len(res), n, user, watch)
 
     res['user'] = user
@@ -63,14 +64,18 @@ def recommend(algo, users, n, candidates=None, *, n_jobs=None, **kwargs):
         ``score``, and any other columns returned by the recommender.
     """
 
+    _logger.info('beginning of recommend function in _recommend_ca (1)')
     if n_jobs is None and 'nprocs' in kwargs:
         n_jobs = kwargs['nprocs']
         warnings.warn('nprocs is deprecated, use n_jobs', DeprecationWarning)
 
+    
     if not isinstance(algo, PersistedModel):
+        _logger.info('adapting algorithm in  _recommend_ca')
         rec_algo = Recommender.adapt(algo)
         if candidates is None and rec_algo is not algo:
             warnings.warn('no candidates provided and algo is not a recommender, unlikely to work')
+            _logger.info('algo is NOT ALGO')
         algo = rec_algo
         del rec_algo
 
@@ -80,12 +85,14 @@ def recommend(algo, users, n, candidates=None, *, n_jobs=None, **kwargs):
     candidates = __standard_cand_fun(candidates)
 
     with util.parallel.invoker(algo, _recommend_user, n_jobs=n_jobs) as worker:
-        _logger.info('recommending with %s for %d users (n_jobs=%s)',
+        _logger.info(' (2) recommending with %s for %d users (n_jobs=%s)',
                      str(algo), len(users), n_jobs)
         del algo
         timer = util.Stopwatch()
         results = worker.map((user, n, candidates(user)) for user in users)
+        _logger.info('results here')
         results = pd.concat(results, ignore_index=True, copy=False)
+        _logger.info(results)
         _logger.info('recommended for %d users in %s', len(users), timer)
 
     return results

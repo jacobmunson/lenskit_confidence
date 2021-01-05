@@ -11,7 +11,7 @@ from copy import copy
 
 import pandas as pd
 
-from ..algorithms import Predictor, Recommender
+from ..algorithms_ca import Predictor, Recommender
 from .. import util
 from ._recommend_ca import recommend
 from ._predict_ca import predict
