@@ -185,6 +185,7 @@ class TopN(Recommender, Predictor):
     def recommend(self, user, n=None, candidates=None, ratings=None):
         if candidates is None:
             candidates = self.selector.candidates(user, ratings) #####
+            _logger.info('number of candidates %s', len(candidates))
 
         scores = self.predictor.predict_for_user(user, candidates, ratings) ####
         _logger.info('in basic_ca, scores for user %s', user)
@@ -192,6 +193,10 @@ class TopN(Recommender, Predictor):
         scores = scores[scores.notna()]
         _logger.info('in basic_ca, scores after notna() for user %s', user)
         #_logger.info(scores)
+        mu_user = 4 #np.mean(scores['prediction']) # 'risk-free' rate for user (might instead set to r0 for all users
+        scores.loc[scores['var'] == 0,'var'] = np.mean(scores['var']) # for scores that are zero, (bc single neighbors) replace with mean variance
+        scores['prediction'] = (scores['prediction'] - mu_user)/(scores['var'])
+        
         if n is not None:
             scores = scores.nlargest(n, 'prediction')
         else:
