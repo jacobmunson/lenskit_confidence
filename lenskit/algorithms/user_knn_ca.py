@@ -8,6 +8,11 @@ import logging
 import pandas as pd
 import numpy as np
 
+##
+from astropy.stats import jackknife_resampling
+from astropy.stats import jackknife_stats
+##
+
 #import math # for nan in my edits
 
 from numba import njit
@@ -96,10 +101,48 @@ def rating_sd(iur, item, sims, use):
         
         for m in use:
             coratings[m] = (co_ratings[m] - mu)**2
-        sd = np.sum(coratings[use]) / (len(use) - 1) # actually variance
+        sd = np.sqrt(np.sum(coratings[use]) / (len(use) - 1)) # sd now   # actually variance
     else:
         sd = 0
     return sd
+
+
+
+###
+
+@njit
+def rating_jk_sd(iur, item, sims, use):
+    """
+    Sum aggregate
+
+    Args:
+        iur(matrix._CSR): the item-user ratings matrix
+        item(int): the item index in ``iur``
+        sims(numpy.ndarray): the similarities for the users who have rated ``item``
+        use(numpy.ndarray): positions in sims and the rating row to actually use
+    """
+    co_ratings = iur.row_vs(item)
+    #coratings = co_ratings.copy()
+    test_statistic = np.std
+    if len(use) > 1: # ratings
+        sd = 0.0
+        mu = 0.0
+
+        #for k in use:
+        #    mu += co_ratings[k]
+        #mu = mu / len(use) # ratings
+        
+        #for m in use:
+        #    coratings[m] = (co_ratings[m] - mu)**2
+        estimate, bias, stderr, conf_interval = jackknife_stats(co_ratings, test_statistic, 0.95)
+        sd = estimate # sd now   # actually variance
+    else:
+        sd = 0
+    return sd
+
+###
+
+
 
 @njit
 def _score(items, results, iur, sims, nnbrs, min_sim, min_nbrs, agg, nbhr_ratings, num_nbhr_actual): # TYPE OF AGGREGATION IS FED INTO HERE
@@ -135,7 +178,7 @@ def _score(items, results, iur, sims, nnbrs, min_sim, min_nbrs, agg, nbhr_rating
             continue
         
         results[i] = agg(iur = iur, item = item, sims = i_sims, use = h_ks[:h_ep]) # AGGREGATE CALL IS HERE     
-        nbhr_ratings[i] = rating_sd(iur = iur, item = item, sims = i_sims, use = h_ks[:h_ep])   
+        nbhr_ratings[i] = rating_jk_sd(iur = iur, item = item, sims = i_sims, use = h_ks[:h_ep]) # RATING STD EST HERE
         num_nbhr_actual[i] = len(h_ks[:h_ep])
         used[i] = h_ep
 
@@ -410,4 +453,4 @@ class UserUserCA(Predictor):
         self._mkl_m_ = mkl.SparseM.from_csr(self.rating_matrix_) if mkl else None
 
     def __str__(self):
-        return 'UserUserCA(nnbrs={}, min_sim={})'.format(self.nnbrs, self.min_sim)
+        return 'UserUser(nnbrs={}, min_sim={})'.format(self.nnbrs, self.min_sim)
