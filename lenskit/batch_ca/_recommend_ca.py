@@ -63,18 +63,18 @@ def recommend(algo, users, n, candidates=None, *, n_jobs=None, **kwargs):
         ``score``, and any other columns returned by the recommender.
     """
 
-    _logger.info('beginning of recommend function in _recommend_ca (1)')
+    #_logger.info('beginning of recommend function in _recommend_ca (1)')
     if n_jobs is None and 'nprocs' in kwargs:
         n_jobs = kwargs['nprocs']
         warnings.warn('nprocs is deprecated, use n_jobs', DeprecationWarning)
 
     
     if not isinstance(algo, PersistedModel):
-        _logger.info('adapting algorithm in  _recommend_ca')
+        #_logger.info('adapting algorithm in  _recommend_ca')
         rec_algo = Recommender.adapt(algo)
         if candidates is None and rec_algo is not algo:
             warnings.warn('no candidates provided and algo is not a recommender, unlikely to work')
-            _logger.info('algo is NOT ALGO')
+            #_logger.info('algo is NOT ALGO')
         algo = rec_algo
         del rec_algo
 
