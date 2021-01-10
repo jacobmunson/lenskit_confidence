@@ -193,8 +193,8 @@ class TopN(Recommender, Predictor):
         scores = scores[scores.notna()]
         #_logger.info('in basic_ca, scores after notna() for user %s', user)
         #_logger.info(scores)
-        mu_user = 5 #np.mean(scores['prediction']) # 'risk-free' rate for user (might instead set to r0 for all users
-        scores.loc[scores['var'] == 0,'var'] = 3 #np.mean(scores['var']) # for scores that are zero, (bc single neighbors) replace with mean variance
+        mu_user = 4.5 #np.mean(scores['prediction']) #### 'risk-free' rate for user (might instead set to r0 for all users
+        scores.loc[scores['var'] == 0,'var'] = 1 #### np.mean(scores['var']) # for scores that are zero, (bc single neighbors) replace with mean variance
         scores['prediction'] = (scores['prediction'] - mu_user)/(scores['var'])
         
         if n is not None:
