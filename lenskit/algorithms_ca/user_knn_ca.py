@@ -16,6 +16,9 @@ from .. import util, matrix
 from . import Predictor
 from ..util.accum import kvp_minheap_insert
 
+from astropy.stats import jackknife_resampling
+from astropy.stats import jackknife_stats
+
 _logger = logging.getLogger(__name__)
 
 
@@ -74,7 +77,7 @@ def _agg_sum(iur, item, sims, use):
     return x
 
 @njit
-def rating_sd(iur, item, sims, use):
+def _rating_avg_std(iur, item, sims, use): # STANDARD DEVIATION FOR AVERAGE
     """
     Sum aggregate
 
@@ -96,13 +99,172 @@ def rating_sd(iur, item, sims, use):
         
         for m in use:
             coratings[m] = (co_ratings[m] - mu)**2
-        sd = np.sum(coratings[use]) / (len(use) - 1) # actually variance
+        sd = np.sqrt(np.sum(coratings[use]) / (len(use) - 1)) # sd now   # actually variance
+    else:
+        sd = 0
+    return sd
+
+
+@njit
+def _rating_weighted_avg_std(iur, item, sims, use): # STANDARD DEVIATION FOR WEIGHTED-AVERAGE
+    """
+    Sum aggregate
+
+    Args:
+        iur(matrix._CSR): the item-user ratings matrix
+        item(int): the item index in ``iur``
+        sims(numpy.ndarray): the similarities for the users who have rated ``item``
+        use(numpy.ndarray): positions in sims and the rating row to actually use
+    """
+    co_ratings = iur.row_vs(item)
+    coratings = co_ratings.copy()
+    if len(use) > 1: # ratings
+        sd = 0.0
+        mu = 0.0
+
+        for k in use:
+            mu += co_ratings[k]*sims[k]
+        mu = mu / len(use) # ratings
+        
+        for m in use:
+            coratings[m] = (co_ratings[m]*sims[k] - mu)**2
+        sd = np.sqrt(np.sum(coratings[use]) / (len(use) - 1)) # sd now   # actually variance
+    else:
+        sd = 0
+    return sd
+
+
+
+###
+
+@njit
+def _rating_avg_jk_std(iur, item, sims, use): # JACKKNIFE ESTIMATE OF STANDARD DEVIATION FOR AVERAGE
+    """
+    Sum aggregate
+
+    Args:
+        iur(matrix._CSR): the item-user ratings matrix
+        item(int): the item index in ``iur``
+        sims(numpy.ndarray): the similarities for the users who have rated ``item``
+        use(numpy.ndarray): positions in sims and the rating row to actually use
+    """
+    co_ratings = iur.row_vs(item)
+    #coratings = co_ratings.copy()
+    #test_statistic = np.std
+    if len(use) > 1: # ratings
+        
+        std_values, n = [], len(use)
+        index = np.arange(n)
+        used_data = co_ratings[use]
+
+        for i in range(n):
+            jk_sample = np.std(used_data[index != i])
+            std_values.append(jk_sample)
+        
+        std_values_jk = np.mean(np.array(std_values))
+        sd = np.std(used_data) - (n - 1)*(std_values_jk - np.std(used_data)) # bias-corrected estimate
     else:
         sd = 0
     return sd
 
 @njit
-def _score(items, results, iur, sims, nnbrs, min_sim, min_nbrs, agg, nbhr_ratings, num_nbhr_actual): # TYPE OF AGGREGATION IS FED INTO HERE
+def _rating_weighted_avg_jk_std(iur, item, sims, use): # JACKKNIFE ESTIMATE OF STANDARD DEVIATION FOR WEIGHTED-AVERAGE
+    """
+    Sum aggregate
+
+    Args:
+        iur(matrix._CSR): the item-user ratings matrix
+        item(int): the item index in ``iur``
+        sims(numpy.ndarray): the similarities for the users who have rated ``item``
+        use(numpy.ndarray): positions in sims and the rating row to actually use
+    """
+    co_ratings = iur.row_vs(item)
+    #coratings = co_ratings.copy()
+    #test_statistic = np.std
+    if len(use) > 1: # ratings
+        
+        std_values, n = [], len(use)
+        index = np.arange(n)
+        used_data = co_ratings[use]*sims[use]
+
+        for i in range(n):
+            jk_sample = np.std(used_data[index != i])
+            std_values.append(jk_sample)
+        
+        std_values_jk = np.mean(np.array(std_values))
+        sd = np.std(used_data) - (n - 1)*(std_values_jk - np.std(used_data)) # bias-corrected estimate
+    else:
+        sd = 0
+    return sd
+
+
+
+
+@njit
+def _rating_weighted_avg_bs_std(iur, item, sims, use): # BOOTSTRAP ESTIMATE OF STANDARD DEVIATION FOR WEIGHTED-AVERAGE
+    """
+    Sum aggregate
+
+    Args:
+        iur(matrix._CSR): the item-user ratings matrix
+        item(int): the item index in ``iur``
+        sims(numpy.ndarray): the similarities for the users who have rated ``item``
+        use(numpy.ndarray): positions in sims and the rating row to actually use
+    """
+    co_ratings = iur.row_vs(item)
+    #coratings = co_ratings.copy()
+    #test_statistic = np.std
+    if len(use) > 1: # ratings
+        
+        #std_values, n = [], len(use)
+        #index = np.arange(n)
+        used_data = co_ratings[use]*sims[use]
+        sample_std = []
+
+        for _ in range(100): # 1000 bootstrap samples
+            sample_n = np.random.choice(used_data, size = len(used_data))
+            sample_std.append(sample_n.std())
+        sd = np.mean(np.array(sample_std))
+    else:
+        sd = 0
+    return sd
+
+
+@njit
+def _rating_avg_bs_std(iur, item, sims, use): # BOOTSTRAP ESTIMATE OF STANDARD DEVIATION FOR AVERAGE
+    """
+    Sum aggregate
+
+    Args:
+        iur(matrix._CSR): the item-user ratings matrix
+        item(int): the item index in ``iur``
+        sims(numpy.ndarray): the similarities for the users who have rated ``item``
+        use(numpy.ndarray): positions in sims and the rating row to actually use
+    """
+    co_ratings = iur.row_vs(item)
+    #coratings = co_ratings.copy()
+    #test_statistic = np.std
+    if len(use) > 1: # ratings
+        
+        #std_values, n = [], len(use)
+        #index = np.arange(n)
+        used_data = co_ratings[use]
+        sample_std = []
+
+        for _ in range(100): # 1000 bootstrap samples
+            sample_n = np.random.choice(used_data, size = len(used_data))
+            sample_std.append(sample_n.std())
+        sd = np.mean(np.array(sample_std))
+    else:
+        sd = 0
+    return sd
+
+
+
+###
+
+@njit
+def _score(items, results, iur, sims, nnbrs, min_sim, min_nbrs, agg, nbhr_ratings, num_nbhr_actual, var): # TYPE OF AGGREGATION IS FED INTO HERE
 
     h_ks = np.empty(nnbrs, dtype=np.int32)
     h_vs = np.empty(nnbrs)
@@ -135,7 +297,7 @@ def _score(items, results, iur, sims, nnbrs, min_sim, min_nbrs, agg, nbhr_rating
             continue
         
         results[i] = agg(iur = iur, item = item, sims = i_sims, use = h_ks[:h_ep]) # AGGREGATE CALL IS HERE     
-        nbhr_ratings[i] = rating_sd(iur = iur, item = item, sims = i_sims, use = h_ks[:h_ep])   
+        nbhr_ratings[i] = var(iur = iur, item = item, sims = i_sims, use = h_ks[:h_ep])   
         num_nbhr_actual[i] = len(h_ks[:h_ep])
         used[i] = h_ep
 
@@ -159,6 +321,8 @@ class UserUserCA(Predictor):
             with unary data and other data types that don't respond well to centering.
         aggregate:
             the type of aggregation to do. Can be ``weighted-average`` or ``sum``.
+        variance_estimator:
+            the type of variance estimator to use.
 
     Attributes:
         user_index_(pandas.Index): User index.
@@ -167,17 +331,31 @@ class UserUserCA(Predictor):
         rating_matrix_(matrix.CSR): Normalized user-item rating matrix.
         transpose_matrix_(matrix.CSR): Transposed un-normalized rating matrix.
     """
+    # Aggregation functions
     AGG_SUM = intern('sum')
     AGG_WA = intern('weighted-average')
     AGG_AVG = intern('average')
-    #VAR_STD = intern('standard-deviation')
 
-    def __init__(self, nnbrs, min_nbrs=1, min_sim=0, center=True, aggregate='weighted-average'):
+    # Standard deviation functions for average and weighted-average    
+    VAR_AVG_STD = intern('standard-deviation-average')
+    VAR_WGT_AVG_STD = intern('standard-deviation-weighted-average')
+
+    # JK estimate of standard deviation for average and weighted-average 
+    VAR_AVG_STD_JK = intern('standard-deviation-jackknife-average')
+    VAR_WGT_AVG_STD_JK = intern('standard-deviation-jackknife-weighted-average')
+
+    # BS estimate of standard deviation for average and weighted-average 
+    VAR_AVG_STD_BS = intern('standard-deviation-bootstrap-average')
+    VAR_WGT_AVG_STD_BS = intern('standard-deviation-bootstrap-weighted-average')
+
+
+    def __init__(self, nnbrs, min_nbrs=1, min_sim=0, center=True, aggregate='weighted-average', variance_estimator = 'standard-deviation-weighted-average'):
         self.nnbrs = nnbrs
         self.min_nbrs = min_nbrs
         self.min_sim = min_sim
         self.center = center
         self.aggregate = intern(aggregate)
+        self.variance_estimator = intern(variance_estimator)
 
     def fit(self, ratings, **kwargs):
         """
@@ -303,7 +481,25 @@ class UserUserCA(Predictor):
             agg = _agg_avg
         else:
             raise ValueError('invalid aggregate ' + self.aggregate)
-        #_logger.info('aggregation type selected')        
+        #_logger.info('aggregation type selected')
+
+        # VARIANCE TYPE
+        if self.variance_estimator == self.VAR_AVG_STD:
+            var = _rating_avg_std
+        elif self.variance_estimator == self.VAR_WGT_AVG_STD:
+            var = _rating_weighted_avg_std
+        elif self.variance_estimator == self.VAR_AVG_STD_JK:
+            var = _rating_avg_jk_std
+        elif self.variance_estimator == self.VAR_WGT_AVG_STD_JK:
+            var = _rating_weighted_avg_jk_std
+        elif self.variance_estimator == self.VAR_AVG_STD_BS:
+            var = _rating_avg_bs_std
+        elif self.variance_estimator == self.VAR_WGT_AVG_STD_BS:
+            var = _rating_weighted_avg_bs_std
+        else:
+            raise ValueError('invalid variance estimator: ' + self.variance_estimator)
+
+        
 
         # SCORING FUNCTION
 
@@ -311,7 +507,7 @@ class UserUserCA(Predictor):
         #_logger.info('calling _score in user_knn for user: %d', user) #####
         # SEEMS LIKE _score function changes 'results' even though that's not in return
         _score(ri_pos, results, self.transpose_matrix_.N, nsims,
-               self.nnbrs, self.min_sim, self.min_nbrs, agg, nbhr_ratings, num_nbhr_actual) # _score returns 
+               self.nnbrs, self.min_sim, self.min_nbrs, agg, nbhr_ratings, num_nbhr_actual, var) # _score returns 
         #_logger.info('testing _score output')
         #_logger.info(used)
         
