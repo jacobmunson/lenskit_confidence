@@ -18,8 +18,7 @@ def _recommend_user(algo, req):
     #_logger.info(' (4) generating recommendations for user %s', user)
     watch = util.Stopwatch()
     res = algo.recommend(user, n, candidates)
-    _logger.info('%s recommended %d/%s items for %s in %s',
-                  str(algo), len(res), n, user, watch)
+    #_logger.info('%s recommended %d/%s items for %s in %s', str(algo), len(res), n, user, watch)
 
     res['user'] = user
     res['rank'] = np.arange(1, len(res) + 1)
