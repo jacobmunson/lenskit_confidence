@@ -188,13 +188,13 @@ class TopN(Recommender, Predictor):
             _logger.info('number of candidates %s', len(candidates))
 
         scores = self.predictor.predict_for_user(user, candidates, ratings) ####
-        _logger.info('in basic_ca, scores for user %s', user)
+        #_logger.info('in basic_ca, scores for user %s', user)
         #_logger.info(scores)
         scores = scores[scores.notna()]
-        _logger.info('in basic_ca, scores after notna() for user %s', user)
+        #_logger.info('in basic_ca, scores after notna() for user %s', user)
         #_logger.info(scores)
-        mu_user = 4 #np.mean(scores['prediction']) # 'risk-free' rate for user (might instead set to r0 for all users
-        scores.loc[scores['var'] == 0,'var'] = np.mean(scores['var']) # for scores that are zero, (bc single neighbors) replace with mean variance
+        mu_user = 4.5 #np.mean(scores['prediction']) # 'risk-free' rate for user (might instead set to r0 for all users
+        scores.loc[scores['var'] == 0,'var'] = 10 #np.mean(scores['var']) # for scores that are zero, (bc single neighbors) replace with mean variance
         scores['prediction'] = (scores['prediction'] - mu_user)/(scores['var'])
         
         if n is not None:
@@ -204,7 +204,7 @@ class TopN(Recommender, Predictor):
         scores.name = 'score'
         scores.index.name = 'item'
         del scores['item'] # testing
-        _logger.info('in basic_ca, scores after if and else for user %s', user)
+        #_logger.info('in basic_ca, scores after if and else for user %s', user)
         #_logger.info(scores)
 
         return scores.reset_index()
