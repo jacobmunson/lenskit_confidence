@@ -13,9 +13,9 @@ _logger = logging.getLogger(__name__)
 
 def _recommend_user(algo, req):
     user, n, candidates = req
-    _logger.info(' (3) calling _recommend_user function in _recommend_ca')
+    #_logger.info(' (3) calling _recommend_user function in _recommend_ca')
     #_logger.info(calling _recommend_user for user:)
-    _logger.info(' (4) generating recommendations for user %s', user)
+    #_logger.info(' (4) generating recommendations for user %s', user)
     watch = util.Stopwatch()
     res = algo.recommend(user, n, candidates)
     _logger.info('%s recommended %d/%s items for %s in %s',
@@ -89,10 +89,10 @@ def recommend(algo, users, n, candidates=None, *, n_jobs=None, **kwargs):
                      str(algo), len(users), n_jobs)
         del algo
         timer = util.Stopwatch()
-        results = worker.map((user, n, candidates(user)) for user in users)
-        _logger.info('results here')
-        results = pd.concat(results, ignore_index=True, copy=False)
-        _logger.info(results)
+        results = worker.map((user, n, candidates(user)) for user in users) ### LENGTH OF candidates(user)???
+        #_logger.info('results here')
+        results = pd.concat(results, ignore_index=True, copy=False) #### HOW LONG IS CANDIDATE LIST PER USER?
+        #_logger.info(results)
         _logger.info('recommended for %d users in %s', len(users), timer)
 
     return results
