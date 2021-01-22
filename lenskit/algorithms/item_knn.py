@@ -267,6 +267,40 @@ def _predict_weighted_average(model, nitems, nrange, ratings, rated, targets):
 
     return scores
 
+@njit(nogil=True)
+def _predict_average(model, nitems, nrange, ratings, rated, targets):
+    "Average prediction function"
+    min_nbrs, max_nbrs = nrange
+    scores = np.full(nitems, np.nan, dtype=np.float_)
+
+    for i in prange(targets.shape[0]):
+        iidx = targets[i]
+        rptr = model.rowptrs[iidx]
+        rend = model.rowptrs[iidx + 1]
+
+        num = 0
+        denom = 0
+        nnbrs = 0
+
+        for j in range(rptr, rend):
+            nidx = model.colinds[j]
+            if not rated[nidx]:
+                continue
+
+            nnbrs = nnbrs + 1
+            num = num + ratings[nidx] #* model.values[j]
+            denom = denom + 1# + np.abs(model.values[j])
+
+            if max_nbrs > 0 and nnbrs >= max_nbrs:
+                break
+
+        if nnbrs < min_nbrs:
+            continue
+
+        scores[iidx] = num / denom
+
+    return scores
+
 
 @njit(nogil=True)
 def _predict_sum(model, nitems, nrange, ratings, rated, targets):
@@ -303,6 +337,7 @@ def _predict_sum(model, nitems, nrange, ratings, rated, targets):
 
 _predictors = {
     'weighted-average': _predict_weighted_average,
+    'average': _predict_average,
     'sum': _predict_sum
 }
 
@@ -585,6 +620,10 @@ class ItemItem(Predictor):
 
         results = pd.Series(iscores, index=self.item_index_)
         results = results.reindex(items, fill_value=np.nan)
+
+        #_logger.info('results')
+        #_logger.info(results)
+
 
         _logger.debug('user %s: predicted for %d of %d items',
                       user, results.notna().sum(), len(items))
