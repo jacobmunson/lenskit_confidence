@@ -38,6 +38,26 @@ def _agg_weighted_avg(iur, item, sims, use):
 
 
 @njit
+def _agg_avg(iur, item, sims, use):
+    """
+    Average aggregate.
+
+    Args:
+        iur(matrix._CSR): the item-user ratings matrix
+        item(int): the item index in ``iur``
+        use(numpy.ndarray): positions in sims and the rating row to actually use
+    """
+
+    rates = iur.row_vs(item)
+    num = 0.0
+    den = len(use) 
+    for j in use:
+        num += rates[j]
+    return num /den # NOTE THAT PREDICTION AT THE END WILL NOT BE EXACTLY THE AVERAGE, SINCE RATINGS ARE NORMALIZED AND OFFSET BY USER AVERAGE
+
+
+
+@njit
 def _agg_sum(iur, item, sims, use):
     """
     Sum aggregate
@@ -116,6 +136,7 @@ class UserUser(Predictor):
     """
     AGG_SUM = intern('sum')
     AGG_WA = intern('weighted-average')
+    AGG_AVG = intern('average')
 
     def __init__(self, nnbrs, min_nbrs=1, min_sim=0, center=True, aggregate='weighted-average'):
         self.nnbrs = nnbrs
@@ -208,6 +229,8 @@ class UserUser(Predictor):
             agg = _agg_weighted_avg
         elif self.aggregate == self.AGG_SUM:
             agg = _agg_sum
+        elif self.aggregate == self.AGG_AVG:
+            agg = _agg_avg
         else:
             raise ValueError('invalid aggregate ' + self.aggregate)
 
