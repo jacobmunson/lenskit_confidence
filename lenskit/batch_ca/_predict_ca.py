@@ -91,7 +91,8 @@ def predict(algo, pairs, *, n_jobs=None, **kwargs): # change n_jobs=None
         results = pd.concat(results)
         _logger.info('generated %d predictions for %d users in %s',
                      len(pairs), nusers, timer)
-
+        _logger.info('results in predict in _predict_ca')
+        _logger.info(results)
     if 'rating' in pairs:
         return pairs.join(results.set_index(['user', 'item']), on=('user', 'item'))
     return results
