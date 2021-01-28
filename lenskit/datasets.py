@@ -401,3 +401,23 @@ class ML1M(MLM):
         users.set_index('user', inplace=True)
         _log.debug('loaded %s', fn)
         return users
+
+
+
+class BookCrossingRatings:
+    """
+    Base class for Book Crossing data, ratings only.
+    """
+
+    def __init__(self, path):
+        self.path = Path(path)
+
+    @cached
+    def ratings(self):
+
+        fn = self.path / 'ratings.csv'
+        ratings = pd.read_csv(fn, sep=';', header= 1, names=['user', 'item', 'rating'])
+        ratings = ratings[ratings.rating != 0]
+        _log.debug('loaded %s', fn)
+        return ratings
+
