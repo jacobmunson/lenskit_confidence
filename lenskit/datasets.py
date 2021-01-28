@@ -421,3 +421,33 @@ class BookCrossingRatings:
         _log.debug('loaded %s', fn)
         return ratings
 
+
+
+
+
+class Netflix:
+    """
+    Base class for Netflix data.
+    """
+
+    def __init__(self, path):
+        self.path = Path(path)
+
+    @cached
+    def train(self):
+
+        fn = self.path / 'train_set.csv'
+        train = pd.read_csv(fn, sep=',', header= 0, names=['user', 'item', 'rating', 'date'])
+        _log.debug('loaded %s', fn)
+        return train
+
+    @cached
+    def test(self):
+
+        fn = self.path / 'test_set.csv'
+        test = pd.read_csv(fn, sep=',', header= 0, names=['user', 'item', 'rating', 'date'])
+        _log.debug('loaded %s', fn)
+        return test
+
+
+
