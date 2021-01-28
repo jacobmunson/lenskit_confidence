@@ -329,3 +329,18 @@ def sample_users(data, partitions: int, size: int, method: PartitionMethod, disj
         rest = data.index.difference(test.index)
         train = data.loc[rest]
         yield TTPair(train, test)
+
+
+def partition_netflix(data):
+    """
+    Partition function for Netflix data; does not perform a partition, it just here for consistency of formatting. 
+
+    Args:
+        data(pandas.DataFrame):
+            Ratings or other data you wish to partition.
+
+    Returns:
+        iterator: an iterator of train-test pairs
+    """
+
+    yield TTPair(data.train, data.test)
