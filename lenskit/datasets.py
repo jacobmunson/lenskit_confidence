@@ -416,7 +416,7 @@ class BookCrossingRatings:
     def ratings(self):
 
         fn = self.path / 'ratings.csv'
-        ratings = pd.read_csv(fn, sep=';', header= 0, names=['user', 'item', 'rating'])
+        ratings = pd.read_csv(fn, sep=',', header= 0, names=['user', 'item', 'rating'])
         ratings = ratings[ratings.rating != 0]
         _log.debug('loaded %s', fn)
         return ratings
