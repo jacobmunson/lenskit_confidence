@@ -254,7 +254,7 @@ class UserUser(Predictor):
                 ratings = rmat.row(upos)
                 umean = self.user_means_[upos] if self.user_means_ is not None else 0
             except KeyError:
-                _logger.warning('user %d has no ratings and none provided', user)
+                #_logger.warning('user %d has no ratings and none provided', user)
                 return None, 0
         else:
             _logger.debug('using provided ratings for user %d', user)
