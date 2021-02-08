@@ -1,3 +1,17 @@
+
+
+# Notice
+
+Our work takes the Lenskit for Python package and modifies certains function to support confidence-aware approaches. The LKPY package is authored and maintained by Michael Ekstrand (available: https://github.com/lenskit) and the contents herein do not reflect on the Lenskit project beyond the scope of this work. This work is not intended to join the larger Lenskit ecosystem and it will not necessarily be maintained/updated as new versions of Lenskit come out. 
+
+- Below we offer some "getting started" tips 
+- Note: Most directories have not been edited; please advise that most readme pages are original from the LKPY github
+- 
+
+
+### Everything below is original to LKPY and has not been edited 
+
+
 # Python recommendation tools
 
 ![Test Suite](https://github.com/lenskit/lkpy/workflows/Test%20Suite/badge.svg)
