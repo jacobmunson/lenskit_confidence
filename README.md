@@ -30,7 +30,7 @@ Our work takes the Lenskit for Python package and modifies certains function to 
     - "Confidence-aware-IBCF-MultiEval.ipynb" for Confidence-aware IBCF walkthrough
     - By default, model output is say in 'my-eval' folder
 - Analyze results
-    - Some analysis is details in the respective notebooks
+    - Some analysis is detailed in the respective notebooks
     - More involved analysis is done in independent notebooks
             - "TopN Evaluation - Baselines-loop.ipynb" is a notebook for looking through list sizes and running Precision and NDCG evaluations with the baseline models
             - "TopN Evaluation - Confidence-aware-loop.ipynb" is a notebook for looking through list sizes and running Precision and NDCG evaluations with the confidence-aware models
