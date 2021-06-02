@@ -44,7 +44,7 @@ Our work takes the Lenskit for Python package and modifies certains function to 
 - Make sure "numba" is installed: conda install numba, conda install numba-scipy
 - Make sure "tqdm" is installed for in-notebook updates
 - Make sure "pickle5" is updated: conda install -c conda-forge pickle5
-        - Gives error: module 'pickle5' has no attribute 'PickleBuffer'
+    - Gives error: module 'pickle5' has no attribute 'PickleBuffer'
 
 ### Some data commentary
 - This paper used the MovieLens 1M, 10M, 20M datasets and the Jester 4.1M dataset
