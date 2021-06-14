@@ -55,6 +55,10 @@ Our work takes the Lenskit for Python package and modifies certains function to 
         - The script to do so is "lenskit_confidence/examples/jester_data_cleaning.R"
 - The graphics in the paper were produced with ggplot: the scripts to produce the graphics are in "lenskit_confidence/examples/" under various "TopN_xxxxxxx_graphics.R" type names
 
+### Confidence-aware Bayesian Probabilistic Matrix Factorization
+- We compare our methods to a non-lenksit baseline CBPMF (2018)
+- The implementation of that model (as well the traditional PMF and BPMF) are avialable here: https://anonymous.4open.science/r/ProbabilisticMatrixFactorization-1004/readme.md
+
 ### Everything below is original to LKPY and has not been edited 
 
 # Python recommendation tools
